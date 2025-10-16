@@ -20,8 +20,9 @@ def parse_args():
     parser.add_argument("--render_output_dir", type=str, default="../demo/example/")
     parser.add_argument("--type", type=str, default="forward",
         choices=["forward", "backward", "left", "right", "turn_left", "turn_right"])
+    parser.add_argument("--num-frames", type=int, default=49,
+        help="Number of frames to generate (use 4n+1: 25,49,81,105,121,...)")
     return parser.parse_args()
-
 
 def camera_list(
     num_frames=49,
@@ -380,7 +381,7 @@ if __name__ == "__main__":
     colors = image.reshape(-1, 3)
     
     intrinsics, extrinsics = camera_list(
-        num_frames=49, type=args.type, Width=Width//2, Height=Height//2, fx=128, fy=128
+        num_frames=args.num_frames, type=args.type, Width=Width//2, Height=Height//2, fx=128, fy=128
     )
     render_list, mask_list, depth_list = render_from_cameras_videos(
         points, colors, extrinsics, intrinsics, height=Height//2, width=Width//2
