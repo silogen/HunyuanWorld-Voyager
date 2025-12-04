@@ -4,6 +4,16 @@ from pathlib import Path
 from loguru import logger
 from datetime import datetime
 
+# Replaces torch GroupNorm for a more optimized HIP variant
+import torch
+if torch.version.hip:
+    try:
+        from opt_groupnorm import OPTGroupNorm
+        torch.nn.GroupNorm = OPTGroupNorm
+        print("Using OPTGroupNorm as torch.nn.GroupNorm")
+    except ImportError:
+        print("Using torch.nn.GroupNorm")
+
 from voyager.utils.file_utils import save_videos_grid
 from voyager.config import parse_args
 from voyager.inference import HunyuanVideoSampler

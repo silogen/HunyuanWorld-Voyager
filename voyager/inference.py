@@ -239,9 +239,10 @@ def parallelize_transformer(pipe):
         freqs_sin_cond = freqs_sin_cond.reshape(-1, dim_thw_cond)
 
         from xfuser.core.long_ctx_attention import xFuserLongContextAttention
+        from yunchang.kernels import AttnType # To configure xFuserLCA with AITER
 
         for block in transformer.double_blocks + transformer.single_blocks:
-            block.hybrid_seq_parallel_attn = xFuserLongContextAttention()
+            block.hybrid_seq_parallel_attn = xFuserLongContextAttention(attn_type=AttnType.AITER)
 
         output = original_forward(
             x,

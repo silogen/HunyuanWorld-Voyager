@@ -14,6 +14,15 @@ except ImportError:
     flash_attn_varlen_func = None
     _flash_attn_forward = None
 
+# Replace flash-attn with AITER
+try:
+    from aiter.ops.mha import _flash_attn_forward
+    from aiter import flash_attn_varlen_func
+    print("Using aiter.flash_attn_varlen_func")
+except ImportError:
+    flash_attn_varlen_func = None
+    _flash_attn_forward = None
+
 
 MEMORY_LAYOUT = {
     "flash": (
@@ -179,7 +188,7 @@ def parallel_attention(
         joint_tensor_value=v[:, img_kv_len:cu_seqlens_kv[1]],
         joint_strategy="rear",
     )
-    if flash_attn.__version__ >= '2.7.0':
+    if flash_attn and flash_attn.__version__ >= '2.7.0':
         attn2, *_ = _flash_attn_forward(
             q[:, cu_seqlens_q[1]:],
             k[:, cu_seqlens_kv[1]:],
@@ -194,6 +203,7 @@ def parallel_attention(
             return_softmax=False,
         )
     else:
+        # AITER path to FA FWD
         attn2, *_ = _flash_attn_forward(
             q[:, cu_seqlens_q[1]:],
             k[:, cu_seqlens_kv[1]:],
@@ -201,10 +211,13 @@ def parallel_attention(
             dropout_p=0.0,
             softmax_scale=q.shape[-1] ** (-0.5),
             causal=False,
-            window_size=(-1, -1),
-            softcap=0.0,
+            window_size_left=-1,
+            window_size_right=-1,
+            bias=None,
             alibi_slopes=None,
+            return_lse=False,
             return_softmax=False,
+            how_v3_bf16_cvt=2,
         )
     attn = torch.cat([attn1, attn2], dim=1)
     b, s, a, d = attn.shape
