@@ -9,36 +9,31 @@ docker run -it --rm \
   --device=/dev/kfd --device=/dev/dri --group-add video \
   -v $(pwd):/workspace -w /workspace \
   --shm-size 32g \
-  rocm/7.0:rocm7.0_pytorch_training_instinct_20250915
+  amdsiloai/pytorch-xdit:v25.12
 ```
 
 ## 2. Dependencies and Installation
 
 ```shell
-git clone https://github.com/Tencent-Hunyuan/HunyuanWorld-Voyager.git
+git clone https://github.com/silogen/HunyuanWorld-Voyager
 cd HunyuanWorld-Voyager
-python -m pip install -r requirements.txt
-python -m pip install transformers==4.39.3
+# Use the AMD-adapted branch
+git checkout feat/rocm-platform
 
 # To create your own input conditions, you also need to install the following dependencies:
 pip install --no-deps git+https://github.com/microsoft/MoGe.git
 pip install scipy==1.11.4
-pip install git+https://github.com/EasternJournalist/utils3d.git@c5daf6f6c244d251f252102d09e9b7bcef791a38
+pip install git+https://github.com/EasternJournalist/utils3d.git@a480806f58337da70d3c0df970b1df91ca152e61
 
-# Additional requirements for Multi-GPU inference with torchrun
-python -m pip install xfuser==0.4.2
-## Fix the CUDA version parsing issue
-sed -i 's/"CUDA_VERSION": lambda: version.parse(torch.version.cuda),/"CUDA_VERSION": lambda: version.parse(torch.version.cuda or "0.0.0"),/' /opt/venv/lib/python3.10/site-packages/xfuser/envs.py
-## Update ring_flashinfer_attn.py, it has been fixed in recent commits but not released
-pip uninstall yunchang -y
-pip install git+https://github.com/feifeibear/long-context-attention.git@7a52abd669efb35e550680a239e1745b620b2bae
+# Dependencies
+pip install pyexr==0.5.0 loguru==0.7.2 tensorboard==2.19.0 transformers==4.45
+
 ```
 
 ## 3. Download Weights
 
 ```shell
-pip install "huggingface_hub[cli]"
-huggingface-cli download tencent/HunyuanWorld-Voyager --local-dir ./ckpts
+hf download tencent/HunyuanWorld-Voyager --local-dir ./ckpts
 # Default model path is hardcoded to /root, modify the model path
 export MODEL_BASE="./ckpts"
 ```
